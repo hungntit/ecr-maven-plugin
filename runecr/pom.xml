@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>ecs-plugin</artifactId>
+        <groupId>test-plugin</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>run-ecr</artifactId>
+    <packaging>jar</packaging>
+    <properties>
+        <exec.workingdir>${basedir}/target</exec.workingdir>
+    </properties>
+    <build>
+        <plugins>
+            <plugin>
+                <groupId>test-plugin</groupId>
+                <artifactId>aws-ecs-maven-plugin</artifactId>
+                <version>1.0-SNAPSHOT</version>
+                <executions>
+                    <execution>
+                        <id>create-archive</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>ls</goal>
+                        </goals>
+                        <configuration>
+                            <cloneFiles>${basedir}/Dockerfile</cloneFiles>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+        </plugins>
+    </build>
+</project>
