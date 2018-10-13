@@ -5,9 +5,15 @@ ECR_ACCOUNT_ID=$1
 REGION=$2
 PROJECT_NAME=$3
 BUILD_VERSION=$4
+PROFILE=$5
+if [ "${PROFILE}" != "" ]; then
+    export AWS_PROFILE=${PROFILE}
+fi
+
 REGISTRY_ID=${ECR_ACCOUNT_ID}.dkr.ecr.${REGION}.amazonaws.com
 DOCKER_REPO=${REGISTRY_ID}/${PROJECT_NAME}
-if [ "$REGION" == "" ];then
+
+if [ "${REGION}" == "" ];then
     $(aws ecr get-login --no-include-email)
 else
      $(aws ecr get-login --region ${REGION} --no-include-email)
