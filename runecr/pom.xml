@@ -13,6 +13,7 @@
     <packaging>jar</packaging>
     <properties>
         <exec.workingdir>${basedir}/target</exec.workingdir>
+        <aws.ecr.region>ap-southeast-2</aws.ecr.region>
     </properties>
     <build>
         <plugins>
@@ -25,7 +26,7 @@
                         <id>create-archive</id>
                         <phase>package</phase>
                         <goals>
-                            <goal>ls</goal>
+                            <goal>deploy</goal>
                         </goals>
                         <configuration>
                             <cloneFiles>${basedir}/Dockerfile</cloneFiles>

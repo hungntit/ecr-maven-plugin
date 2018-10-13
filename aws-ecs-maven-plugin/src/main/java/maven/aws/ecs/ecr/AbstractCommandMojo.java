@@ -59,18 +59,18 @@ public abstract class AbstractCommandMojo extends ExecMojo {
 
     public void prepairFilesToWorkingDir() throws MojoExecutionException {
 
-        if(cloneFiles != null) {
+        if (cloneFiles != null) {
             if (cloneFileTargetedDir == null) {
                 this.cloneFileTargetedDir = this.getWorkingDirectory();
             }
             for (String path : cloneFiles) {
-                this.executeCommand(new Command(this.getWorkingDirectory(),"cp", "-rp", path, this.cloneFileTargetedDir.getAbsolutePath() + "/"), new HashMap<String, String>());
+                this.executeCommand(new Command(this.getWorkingDirectory(), "cp", "-rp", path, this.cloneFileTargetedDir.getAbsolutePath() + "/"), new HashMap<String, String>());
             }
         }
 
     }
 
-    public abstract List<Command> getCommands();
+    public abstract List<Command> getCommands() throws MojoExecutionException;
 
     public void verify() throws MojoExecutionException {
 
@@ -87,6 +87,7 @@ public abstract class AbstractCommandMojo extends ExecMojo {
         String[] args = command.getCommandArgs().toArray(new String[command.getCommandArgs().size()]);
         commandLine.addArguments(args, false);
         Executor exec = new DefaultExecutor();
+
         exec.setWorkingDirectory(command.getWorkingDirectory());
         try {
             int resultCode;
@@ -228,7 +229,7 @@ public abstract class AbstractCommandMojo extends ExecMojo {
     }
 
 
-    CommandLine getExecutablePath(String executable, Map<String, String> enviro, File dir) {
+    CommandLine getExecutablePath(String executable, Map<String, String> enviro, File dir) throws MojoExecutionException {
         File execFile = new File(executable);
         String exec = null;
         if (execFile.isFile()) {
