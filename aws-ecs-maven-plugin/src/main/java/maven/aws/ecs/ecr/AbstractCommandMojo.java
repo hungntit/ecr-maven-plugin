@@ -3,6 +3,7 @@ package maven.aws.ecs.ecr;
 import org.apache.commons.exec.*;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.apache.maven.plugins.annotations.Parameter;
+import org.apache.maven.project.MavenProject;
 import org.codehaus.mojo.exec.ExecMojo;
 import org.codehaus.plexus.util.IOUtil;
 import org.codehaus.plexus.util.StringUtils;
@@ -13,12 +14,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.*;
 
-/**
- * Goal which touches a timestamp file.
- *
- * @goal touch
- * @phase process-sources
- */
+
 public abstract class AbstractCommandMojo extends ExecMojo {
 
     @Parameter(
@@ -53,6 +49,57 @@ public abstract class AbstractCommandMojo extends ExecMojo {
     @Parameter
     private int[] successCodes;
 
+    static String findExecutable(String executable, List<String> paths) {
+        File f = null;
+        Iterator var3 = paths.iterator();
+
+        while (var3.hasNext()) {
+            String path = (String) var3.next();
+            f = new File(path, executable);
+            if (!OS.isFamilyWindows() && f.isFile()) {
+                break;
+            }
+
+            Iterator var5 = getExecutableExtensions().iterator();
+
+            while (var5.hasNext()) {
+                String extension = (String) var5.next();
+                f = new File(path, executable + extension);
+                if (f.isFile()) {
+                    return f != null && f.exists() ? f.getAbsolutePath() : null;
+                }
+            }
+        }
+
+        return f != null && f.exists() ? f.getAbsolutePath() : null;
+    }
+
+    private static boolean hasNativeExtension(String exec) {
+        String lowerCase = exec.toLowerCase();
+        return lowerCase.endsWith(".exe") || lowerCase.endsWith(".com");
+    }
+
+    private static boolean hasExecutableExtension(String exec) {
+        String lowerCase = exec.toLowerCase();
+        Iterator var2 = getExecutableExtensions().iterator();
+
+        String ext;
+        do {
+            if (!var2.hasNext()) {
+                return false;
+            }
+
+            ext = (String) var2.next();
+        } while (!lowerCase.endsWith(ext));
+
+        return true;
+    }
+
+    private static List<String> getExecutableExtensions() {
+        String pathExt = System.getenv("PATHEXT");
+        return pathExt == null ? Arrays.asList(".bat", ".cmd") : Arrays.asList(StringUtils.split(pathExt.toLowerCase(), File.pathSeparator));
+    }
+
     public File getWorkingDirectory() {
         return workingDirectory;
     }
@@ -64,7 +111,9 @@ public abstract class AbstractCommandMojo extends ExecMojo {
                 this.cloneFileTargetedDir = this.getWorkingDirectory();
             }
             for (String path : cloneFiles) {
-                this.executeCommand(new Command(this.getWorkingDirectory(), "cp", "-rp", path, this.cloneFileTargetedDir.getAbsolutePath() + "/"), new HashMap<String, String>());
+                this.executeCommand(new Command(this.getWorkingDirectory(),
+                                "cp", "-rp", path, this.cloneFileTargetedDir.getAbsolutePath() + "/"),
+                        new HashMap<String, String>());
             }
         }
 
@@ -78,6 +127,14 @@ public abstract class AbstractCommandMojo extends ExecMojo {
 
     public File getBasedir() {
         return basedir;
+    }
+
+    public File getTargetDir() {
+        return new File(basedir, "target");
+    }
+
+    protected void executeCommand(Command command) throws MojoExecutionException {
+        executeCommand(command, new HashMap<>());
     }
 
     protected void executeCommand(Command command, Map<String, String> environments) throws MojoExecutionException {
@@ -153,7 +210,6 @@ public abstract class AbstractCommandMojo extends ExecMojo {
 
     }
 
-
     boolean isResultCodeAFailure(int result) {
         if (this.successCodes != null && this.successCodes.length != 0) {
             int[] var2 = this.successCodes;
@@ -171,7 +227,6 @@ public abstract class AbstractCommandMojo extends ExecMojo {
             return result != 0;
         }
     }
-
 
     private void handleWorkingDirectory() throws MojoExecutionException {
         if (this.workingDirectory == null) {
@@ -228,7 +283,6 @@ public abstract class AbstractCommandMojo extends ExecMojo {
         return enviro;
     }
 
-
     CommandLine getExecutablePath(String executable, Map<String, String> enviro, File dir) throws MojoExecutionException {
         File execFile = new File(executable);
         String exec = null;
@@ -262,57 +316,6 @@ public abstract class AbstractCommandMojo extends ExecMojo {
         return toRet;
     }
 
-    static String findExecutable(String executable, List<String> paths) {
-        File f = null;
-        Iterator var3 = paths.iterator();
-
-        while (var3.hasNext()) {
-            String path = (String) var3.next();
-            f = new File(path, executable);
-            if (!OS.isFamilyWindows() && f.isFile()) {
-                break;
-            }
-
-            Iterator var5 = getExecutableExtensions().iterator();
-
-            while (var5.hasNext()) {
-                String extension = (String) var5.next();
-                f = new File(path, executable + extension);
-                if (f.isFile()) {
-                    return f != null && f.exists() ? f.getAbsolutePath() : null;
-                }
-            }
-        }
-
-        return f != null && f.exists() ? f.getAbsolutePath() : null;
-    }
-
-    private static boolean hasNativeExtension(String exec) {
-        String lowerCase = exec.toLowerCase();
-        return lowerCase.endsWith(".exe") || lowerCase.endsWith(".com");
-    }
-
-    private static boolean hasExecutableExtension(String exec) {
-        String lowerCase = exec.toLowerCase();
-        Iterator var2 = getExecutableExtensions().iterator();
-
-        String ext;
-        do {
-            if (!var2.hasNext()) {
-                return false;
-            }
-
-            ext = (String) var2.next();
-        } while (!lowerCase.endsWith(ext));
-
-        return true;
-    }
-
-    private static List<String> getExecutableExtensions() {
-        String pathExt = System.getenv("PATHEXT");
-        return pathExt == null ? Arrays.asList(".bat", ".cmd") : Arrays.asList(StringUtils.split(pathExt.toLowerCase(), File.pathSeparator));
-    }
-
     private List<String> getExecutablePaths(Map<String, String> enviro) {
         List<String> paths = new ArrayList();
         paths.add("");
@@ -323,5 +326,23 @@ public abstract class AbstractCommandMojo extends ExecMojo {
 
         return paths;
     }
+
+    public MavenProject getMavenProject() {
+        return (MavenProject) this.getPluginContext().get("project");
+    }
+
+    public Properties getFullProperties() {
+        Properties properties = new Properties();
+        MavenProject mavenProject = getMavenProject();
+        properties.put("project.name", mavenProject.getName());
+        properties.put("project.artifactId", mavenProject.getArtifactId());
+        properties.put("project.groupId", mavenProject.getGroupId());
+        properties.put("project.version", mavenProject.getVersion());
+        properties.put("project.basedir", mavenProject.getBasedir().getAbsolutePath());
+        properties.putAll(mavenProject.getProperties());
+        properties.putAll(System.getProperties());
+        return properties;
+    }
+
 }
 

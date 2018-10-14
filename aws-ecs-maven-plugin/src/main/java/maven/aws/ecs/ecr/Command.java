@@ -14,6 +14,10 @@ import java.util.List;
 
 public class Command {
 
+    public enum ClasspathCommandType {
+        bash,
+        sh
+    }
     private String executable;
 
     private List<String> commandArgs;
@@ -31,8 +35,51 @@ public class Command {
         this(workingDirectory, false, executable, commandArgs);
     }
 
-    public Command( File workingDirectory, String executable, String... args) {
-        this(workingDirectory, false, executable, args == null? Collections.<String>emptyList() : Arrays.asList(args));
+    public Command(File workingDirectory, String executable, String... args) {
+        this(workingDirectory, false, executable, args == null ? Collections.<String>emptyList() : Arrays.asList(args));
+    }
+
+    public static String toCommandString(String executable, List<String> commandArgs) {
+        final StringBuilder sb = new StringBuilder(executable);
+        for (String arg : commandArgs) {
+            if (arg != null) {
+                sb.append(" ").append(arg);
+            }
+        }
+        return sb.toString();
+    }
+
+    public static Command convertClasspathToShCommand(Command classpathCommand) throws MojoExecutionException {
+        return convertClasspathToShCommand(classpathCommand, ClasspathCommandType.sh);
+    }
+
+    public static Command convertClasspathToShCommand(Command classpathCommand, ClasspathCommandType type ) throws MojoExecutionException {
+        String path = classpathCommand.getExecutable();
+        boolean isClassPath = path.startsWith("classpath:");
+        if (isClassPath) {
+            FileOutputStream fos = null;
+            try {
+                File scriptFile = File.createTempFile("bash", ".sh");
+                InputStream in = Command.class.getClassLoader().getResourceAsStream(path.split(":", 2)[1]);
+                fos = new FileOutputStream(scriptFile);
+                IOUtil.copy(in, fos);
+                List<String> args = new ArrayList<String>();
+                args.add(scriptFile.getAbsolutePath());
+                args.addAll(classpathCommand.commandArgs);
+                return new Command(classpathCommand.getWorkingDirectory(), classpathCommand.isIgnoreExecuteFailure(), type.name(), args);
+            } catch (IOException ex) {
+                throw new MojoExecutionException(path + ": file does not exist");
+            } finally {
+                if (fos != null) {
+                    try {
+                        fos.close();
+                    } catch (IOException e) {
+                    }
+                }
+            }
+        } else {
+            throw new MojoExecutionException(classpathCommand.toCommandString() + " is not classpath");
+        }
     }
 
     public String getExecutable() {
@@ -67,19 +114,8 @@ public class Command {
         this.ignoreExecuteFailure = ignoreExecuteFailure;
     }
 
-
     public String toCommandString() {
         return toCommandString(this.executable, this.commandArgs);
-    }
-
-    public static String toCommandString(String executable, List<String> commandArgs) {
-        final StringBuilder sb = new StringBuilder(executable);
-        for (String arg : commandArgs) {
-            if (arg != null) {
-                sb.append(" ").append(arg);
-            }
-        }
-        return sb.toString();
     }
 
     @Override
@@ -90,34 +126,5 @@ public class Command {
                 ", workingDirectory=" + workingDirectory +
                 ", ignoreExecuteFailure=" + ignoreExecuteFailure +
                 '}';
-    }
-
-    public static Command convertClasspathToShCommand(Command classpathCommand) throws MojoExecutionException {
-        String path = classpathCommand.getExecutable();
-        boolean isClassPath = path.startsWith("classpath:");
-        if (isClassPath) {
-            FileOutputStream fos = null;
-            try {
-                File scriptFile = File.createTempFile("bash", ".sh");
-                InputStream in = Command.class.getClassLoader().getResourceAsStream(path.split(":", 2)[1]);
-                fos = new FileOutputStream(scriptFile);
-                IOUtil.copy(in, fos);
-                List<String> args = new ArrayList<String>();
-                args.add(scriptFile.getAbsolutePath());
-                args.addAll(classpathCommand.commandArgs);
-                return new Command(classpathCommand.getWorkingDirectory(), classpathCommand.isIgnoreExecuteFailure(), "sh", args);
-            } catch (IOException ex) {
-                throw new MojoExecutionException(path + ": file does not exist");
-            } finally {
-                if (fos != null) {
-                    try {
-                        fos.close();
-                    } catch (IOException e) {
-                    }
-                }
-            }
-        } else {
-            throw  new MojoExecutionException(classpathCommand.toCommandString() + " is not classpath");
-        }
     }
 }

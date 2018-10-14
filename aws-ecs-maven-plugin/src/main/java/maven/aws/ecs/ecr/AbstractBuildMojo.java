@@ -4,6 +4,7 @@ import org.apache.maven.plugins.annotations.Parameter;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Properties;
 
 public abstract class AbstractBuildMojo extends AbstractCommandMojo {
     @Parameter(
@@ -20,6 +21,11 @@ public abstract class AbstractBuildMojo extends AbstractCommandMojo {
             property = "project.version"
     )
     protected String version;
+
+    @Parameter(
+            property = "project.name"
+    )
+    protected String projectName;
 
     @Parameter(
             property = "user.name"
@@ -40,5 +46,12 @@ public abstract class AbstractBuildMojo extends AbstractCommandMojo {
         if (buildNumber == null) {
             buildNumber = new SimpleDateFormat("yyyyMMddHHmmss").format(mavenBuildTimeStamp);
         }
+    }
+
+    @Override
+    public Properties getFullProperties() {
+        Properties properties = super.getFullProperties();
+        properties.put("build.number", buildNumber);
+        return properties;
     }
 }
