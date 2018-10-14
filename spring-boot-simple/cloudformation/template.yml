@@ -131,7 +131,7 @@ Resources:
       Name: !Ref 'ArtifactId'
       Port: !Ref 'ContainerPort'
       Protocol: HTTP
-      UnhealthyThresholdCount: 2
+      UnhealthyThresholdCount: 3
       VpcId: !ImportValue 'cloudformation-vpc-VPCId'
 
 
