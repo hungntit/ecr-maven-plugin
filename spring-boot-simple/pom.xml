@@ -83,7 +83,7 @@
                         <id>deploy</id>
                         <phase>install</phase>
                         <goals>
-                            <goal>deploy</goal>
+                            <goal>ecr:deploy</goal>
                             <goal>cloudformation:deploy</goal>
                         </goals>
                     </execution>
