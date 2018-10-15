@@ -1,7 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Deploy a service on AWS Fargate, hosted in a private subnet, but accessible via a public load balancer.
 Parameters:
-
+  StackPrefix:
+    Type: String
   GroupId:
     Type: String
     Default: '@{project.groupId}'
@@ -71,7 +72,9 @@ Resources:
       NetworkMode: awsvpc
       RequiresCompatibilities:
       - FARGATE
-      ExecutionRoleArn: !ImportValue 'cloudformation-alb-ECSTaskExecutionRole'
+      ExecutionRoleArn:
+        Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-alb-ECSTaskExecutionRole"
       TaskRoleArn: !GetAtt TaskRole.Arn
       ContainerDefinitions:
       - Name: !Ref 'ArtifactId'
@@ -83,7 +86,9 @@ Resources:
         LogConfiguration:
           LogDriver: awslogs
           Options:
-            awslogs-group:  !ImportValue 'cloudformation-alb-LogGroupName'
+            awslogs-group:
+              Fn::ImportValue:
+                !Sub "${StackPrefix}cloudformation-alb-LogGroupName"
             awslogs-region: !Ref AWS::Region
             awslogs-stream-prefix: !Ref 'ArtifactId'
 
@@ -95,7 +100,9 @@ Resources:
     DependsOn: LoadBalancerRule
     Properties:
       ServiceName: !Ref 'ArtifactId'
-      Cluster: !ImportValue 'cloudformation-alb-ClusterName'
+      Cluster:
+        Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-alb-ClusterName"
       LaunchType: FARGATE
       DeploymentConfiguration:
         MaximumPercent: 200
@@ -104,10 +111,13 @@ Resources:
       NetworkConfiguration:
         AwsvpcConfiguration:
           SecurityGroups:
-          - Fn::ImportValue: 'cloudformation-alb-FargateContainerSecurityGroup'
+          - Fn::ImportValue:
+              !Sub "${StackPrefix}cloudformation-alb-FargateContainerSecurityGroup"
           Subnets:
-          - Fn::ImportValue: 'cloudformation-vpc-PrivateSubnetOne'
-          - Fn::ImportValue: 'cloudformation-vpc-PrivateSubnetTwo'
+          - Fn::ImportValue:
+              !Sub "${StackPrefix}cloudformation-vpc-PrivateSubnetOne"
+          - Fn::ImportValue:
+              !Sub "${StackPrefix}cloudformation-vpc-PrivateSubnetTwo"
       TaskDefinition: !Ref 'TaskDefinition'
       LoadBalancers:
       - ContainerName: !Ref 'ArtifactId'
@@ -132,7 +142,9 @@ Resources:
       Port: !Ref 'ContainerPort'
       Protocol: HTTP
       UnhealthyThresholdCount: 3
-      VpcId: !ImportValue 'cloudformation-vpc-VPCId'
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-vpc-VPCId"
 
 
   # Create a rule on the load balancer for routing traffic to the target group
@@ -145,5 +157,7 @@ Resources:
       Conditions:
       - Field: path-pattern
         Values: [!Ref 'Path']
-      ListenerArn: !ImportValue 'cloudformation-alb-PublicListener'
+      ListenerArn:
+        Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-alb-PublicListener"
       Priority: !Ref 'Priority'

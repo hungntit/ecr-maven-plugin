@@ -11,6 +11,7 @@
 
     <artifactId>cloudformation-alb</artifactId>
     <packaging>pom</packaging>
+
     <repositories>
         <repository>
             <id>hungntit-aws-deploy-maven-plugin</id>

@@ -1,2 +1,6 @@
 [
+  {
+    "ParameterKey": "StackPrefix",
+    "ParameterValue": "dev-"
+  }
 ]

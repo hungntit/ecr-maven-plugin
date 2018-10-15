@@ -1,20 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: Deploy an ECS cluster and ALB
 Parameters:
-  StackName:
+  StackPrefix:
     Type: String
-    Default: production
-    Description: The name of the parent Fargate networking stack that you created. Necessary
-      to locate and reference resources created by that stack.
-  ServiceName:
-    Type: String
-    Default: nginx
-    Description: A name for the service
-  ImageUrl:
-    Type: String
-    Default: nginx
-    Description: The url of a docker image that contains the application process that
-      will handle the traffic for this service
   ContainerPort:
     Type: Number
     Default: 80
@@ -68,7 +56,9 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Access to the Fargate containers
-      VpcId: !ImportValue 'cloudformation-vpc-VPCId'
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-vpc-VPCId"
   EcsSecurityGroupIngressFromPublicALB:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -108,7 +98,9 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Access to the public facing load balancer
-      VpcId: !ImportValue 'cloudformation-vpc-VPCId'
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-vpc-VPCId"
       SecurityGroupIngress:
       # Allow access to ALB from anywhere on the internet
       - CidrIp: 0.0.0.0/0
@@ -123,8 +115,10 @@ Resources:
       Subnets:
       # The load balancer is placed into the public subnets, so that traffic
       # from the internet can reach the load balancer directly via the internet gateway
-      - !ImportValue 'cloudformation-vpc-PublicSubnetOne'
-      - !ImportValue 'cloudformation-vpc-PublicSubnetTwo'
+      - Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-vpc-PublicSubnetOne"
+      - Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-vpc-PublicSubnetTwo"
       SecurityGroups: [!Ref 'PublicLoadBalancerSG']
   # A dummy target group is used to setup the ALB to just drop traffic
   # initially, before any real service target groups have been added.
@@ -140,7 +134,9 @@ Resources:
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 2
-      VpcId: !ImportValue 'cloudformation-vpc-VPCId'
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-vpc-VPCId"
   PublicLoadBalancerListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     DependsOn:
@@ -160,7 +156,9 @@ Resources:
     Type: AWS::EC2::SecurityGroup
     Properties:
       GroupDescription: Access to the internal load balancer
-      VpcId: !ImportValue 'cloudformation-vpc-VPCId'
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-vpc-VPCId"
   PrivateLoadBalancerIngressFromECS:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
@@ -178,8 +176,11 @@ Resources:
       Subnets:
       # This load balancer is put into the private subnet, so that there is no
       # route for the public to even be able to access the private load balancer.
-      - !ImportValue 'cloudformation-vpc-PrivateSubnetOne'
-      - !ImportValue 'cloudformation-vpc-PrivateSubnetTwo'
+      - Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-vpc-PrivateSubnetOne"
+      - Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-vpc-PrivateSubnetTwo"
+
       SecurityGroups: [!Ref 'PrivateLoadBalancerSG']
   # This dummy target group is used to setup the ALB to just drop traffic
   # initially, before any real service target groups have been added.
@@ -195,7 +196,9 @@ Resources:
       Port: 80
       Protocol: HTTP
       UnhealthyThresholdCount: 2
-      VpcId: !ImportValue 'cloudformation-vpc-VPCId'
+      VpcId:
+        Fn::ImportValue:
+          !Sub "${StackPrefix}cloudformation-vpc-VPCId"
   PrivateLoadBalancerListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     DependsOn:
@@ -277,7 +280,7 @@ Resources:
   LogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: 'fargate-ecs'
+      LogGroupName: !Join [ '-', [ !Ref 'AWS::StackName', 'fargate-ecs' ] ]
       RetentionInDays: 7
 # These are the values output by the CloudFormation template. Be careful
 # about changing any of them, because of them are exported with specific
@@ -321,7 +324,7 @@ Outputs:
 
   FargateEcsLogGroupName:
     Description: Cloudwatch LogGroup
-    Value: 'fargate-ecs'
+    Value: !Join [ '-', [ !Ref 'AWS::StackName', 'fargate-ecs' ] ]
     Export:
       Name: !Join [ '-', [ !Ref 'AWS::StackName', 'LogGroupName' ] ]
 
