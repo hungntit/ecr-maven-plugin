@@ -26,9 +26,9 @@
     <build>
         <plugins>
             <plugin>
-                <groupId>aws-maven-plugin</groupId>
+                <groupId>com.dzodi</groupId>
                 <artifactId>aws-deploy-maven-plugin</artifactId>
-                <version>1.0.8</version>
+                <version>1.0.10</version>
                 <executions>
                     <execution>
                         <id>deploy</id>

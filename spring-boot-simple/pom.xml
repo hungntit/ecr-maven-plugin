@@ -29,7 +29,18 @@
         </dependency>
     </dependencies>
 
-
+    <repositories>
+        <repository>
+            <id>hungntit-aws-deploy-maven-plugin</id>
+            <url>https://packagecloud.io/hungntit/aws-deploy-maven-plugin/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
     <!-- Additional lines to be added here... -->
     <build>
         <plugins>
@@ -66,15 +77,15 @@
                 </configuration>
             </plugin>
             <plugin>
-                <groupId>aws-maven-plugin</groupId>
+                <groupId>com.dzodi</groupId>
                 <artifactId>aws-deploy-maven-plugin</artifactId>
-                <version>1.0.8</version>
+                <version>1.0.10</version>
                 <executions>
                     <execution>
                         <id>deploy</id>
                         <phase>install</phase>
                         <goals>
-                            <goal>deploy</goal>
+                            <goal>install</goal>
                             <goal>cloudformation:deploy</goal>
                         </goals>
                     </execution>
