@@ -9,7 +9,6 @@
     <packaging>pom</packaging>
     <version>1.0-SNAPSHOT</version>
     <modules>
-        <module>aws-ecs-maven-plugin</module>
         <module>cloudformation-vpc</module>
         <module>cloudformation-alb</module>
         <module>spring-boot-simple</module>

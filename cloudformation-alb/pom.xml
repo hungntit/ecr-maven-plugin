@@ -11,12 +11,24 @@
 
     <artifactId>cloudformation-alb</artifactId>
     <packaging>pom</packaging>
+    <repositories>
+        <repository>
+            <id>hungntit-aws-deploy-maven-plugin</id>
+            <url>https://packagecloud.io/hungntit/aws-deploy-maven-plugin/maven2</url>
+            <releases>
+                <enabled>true</enabled>
+            </releases>
+            <snapshots>
+                <enabled>true</enabled>
+            </snapshots>
+        </repository>
+    </repositories>
     <build>
         <plugins>
             <plugin>
                 <groupId>aws-maven-plugin</groupId>
-                <artifactId>aws-ecs-maven-plugin</artifactId>
-                <version>1.0-SNAPSHOT</version>
+                <artifactId>aws-deploy-maven-plugin</artifactId>
+                <version>1.0.0</version>
                 <executions>
                     <execution>
                         <id>deploy</id>
